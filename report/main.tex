@@ -1,0 +1,186 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{amsfonts}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage{pgfplots}
+\usepackage{tikz}
+\usepackage[superscript]{cite}
+\usetikzlibrary{tikzmark}
+
+
+\title{Non-parametric Texture Synthesis \\ EE4212 Part 2 Assignment 1}
+\author{Luca Krueger}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Algorithm}
+This project covers an implementation of an algorithm for texture growing as proposed by Alexei A. Efros et. al in the paper \textit{"Texture Synthesis by Non-parametric Sampling"}\cite{Efros}.
+
+To find a new pixel, the algorithm compares the neighborhood of the new pixel with neighborhood of each pixel of the source image. The pixel with the closest neighborhood becomes the source pixel and is copied to the new position. These steps are repeated until every pixel of the image is filled.
+In the beginning the source image is placed in the upper left corner. The size of the sythesized image can be specified by the parameter \texttt{SCALE}.
+The neighborhood of a pixel is compared by determining the pixel-wise L2-distance. 
+
+Obviously the neighbourhood of a pixel must have at least one non-zero pixel. Therefore the implementation only selects new pixels bordering to already synthesized pixels of the image. In addition to that it uses a mask $M\in [0,1]\times n \times n$ which exludes pixels with either zero value in the source or the target pixel from the neighbourhood.
+
+The final image is filled starting from the source image from top to bottom and then from left to right.
+
+\section{Performance and Accuracy}
+The accuracy of the algorithm highly depends on the \texttt{WINDOW} size used an the repetition of a particular pattern within a texture. 
+I observed that high repititions of small patterns require a smaller \texttt{WINDOW} size for better performance whereas large patterns are synthesized more accurately using a larger parameter. Figure 
+
+
+My first implementations of this algorithm weighted the pixel-wise distances with a $2D$ gaussian kernel. But this method only reduced the effective window size in a radial manner and did not improve accuracy. Therefore it is not used in the final implementation, which also give a performance speedup.
+
+The function \texttt{find\_best\_match} consists of a loop itaration over almost every pixel in the source image. The function \texttt{compute distance} is called every iteration. To compute the distance, several element wise operations such as element-wise multiplication or computation of distance is required. Hence, this function scales to $\mathcal{O}(n^2)$, where $n$ is the \texttt{WINDOW} size. 
+Since the fucntion find best match is called for each pixel, namely at a scale of $\mathcal{O}((s*SCALE)^2-s^2))=\mathcal{O}(s^2)$, where $s$ is the source image size, the overall algorithm scales to $\mathcal{O}(s^4\times n^2 \times SCALE^2=\mathcal{O}(s^4*n^2)$. This scaling can be slightly improved by  making use of opencv's optimized math function, but still requires a significant amount of time for larger images. 
+The impact of the \texttt{WINDOW} size is not as significant for the overall performance, because $s>>n$ in the general case.
+% Texture 1
+\begin{figure}[H]
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.4\textwidth]{../textures/texture1.jpg}
+		\caption{original}
+		\label{text-1-orig}
+	\end{subfigure}%
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.8\textwidth]{../textures/synth/texture1-synth-w5.jpg}
+		\caption{\texttt{WINDOW} size $5$}
+		\label{text-1-w5}
+	\end{subfigure}%
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.8\textwidth]{../textures/synth/texture1-synth-w11.jpg}
+		\caption{\texttt{WINDOW} size $11$}
+		\label{text-1-w11}
+	\end{subfigure}%
+	\caption{Texture 1}
+	\label{text-1}
+\end{figure}
+
+
+
+% Texture 2
+\begin{figure}[H]
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.4\textwidth]{../textures/texture2.jpg}
+		\caption{original}
+		\label{text-2-orig}
+	\end{subfigure}%
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.8\textwidth]{../textures/synth/texture2-synth-w5.jpg}
+		\caption{\texttt{WINDOW} size $5$}
+		\label{text-2-w5}
+	\end{subfigure}%
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.8\textwidth]{../textures/synth/texture2-synth-w25.jpg}
+		\caption{\texttt{WINDOW} size $25$}
+		\label{text-2-w25}
+	\end{subfigure}%
+	\caption{Texture 2}
+	\label{text-2}
+\end{figure}
+
+
+%Texture 3
+\begin{figure}[H]
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.4\textwidth]{../textures/texture3.jpg}
+		\caption{original}
+		\label{text-3-orig}
+	\end{subfigure}%
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.8\textwidth]{../textures/synth/texture3-synth-w5.jpg}
+		\caption{\texttt{WINDOW} size $5$}
+		\label{text-3-w5}
+	\end{subfigure}%
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.8\textwidth]{../textures/synth/texture3-synth-w25.jpg}
+		\caption{\texttt{WINDOW} size $25$}
+		\label{text-3-w25}
+	\end{subfigure}%
+	\caption{Texture 3}
+	\label{text-3}
+\end{figure}
+
+
+%Texture 4
+\begin{figure}[H]
+	\begin{subfigure}{0.5\textwidth}
+		\centering
+		\includegraphics[width=0.4\textwidth]{../textures/texture4.jpg}
+		\caption{original}
+		\label{text-4-orig}
+	\end{subfigure}%
+	\begin{subfigure}{0.5\textwidth}
+		\centering
+		\includegraphics[width=0.8\textwidth]{../textures/synth/texture4-synth-w35.jpg}
+		\caption{\texttt{WINDOW} size $35$}
+		\label{text-4-w5}
+	\end{subfigure}%
+	\caption{Texture 4}
+	\label{text-4}
+\end{figure}
+
+
+%Texture 5
+\begin{figure}[H]
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.4\textwidth]{../textures/texture5.jpg}
+		\caption{original}
+		\label{text-5-orig}
+	\end{subfigure}%
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.8\textwidth]{../textures/synth/texture5-synth-w11.jpg}
+		\caption{\texttt{WINDOW} size $11$}
+		\label{text-5-w11}
+	\end{subfigure}%
+	\begin{subfigure}{0.33\textwidth}
+		\centering
+		\includegraphics[width=0.8\textwidth]{../textures/synth/texture5-synth-w25.jpg}
+		\caption{\texttt{WINDOW} size $25$}
+		\label{text-5-w25}
+	\end{subfigure}%
+	\caption{Texture 5}
+	\label{text-5}
+\end{figure}
+
+%Texture 6
+\begin{figure}[H]
+	\begin{subfigure}{0.5\textwidth}
+		\centering
+		\includegraphics[width=0.4\textwidth]{../textures/texture6.jpg}
+		\caption{original}
+		\label{text-6-orig}
+	\end{subfigure}%
+	\begin{subfigure}{0.5\textwidth}
+		\centering
+		\includegraphics[width=0.8\textwidth]{../textures/synth/texture6-synth-w11.jpg}
+		\caption{\texttt{WINDOW} size $11$}
+		\label{text-6-w11}
+	\end{subfigure}%
+	\caption{Texture 6}
+	\label{text-6}
+\end{figure}
+
+\bibliography{references}
+\bibliographystyle{unsrt}
+\end{document}
