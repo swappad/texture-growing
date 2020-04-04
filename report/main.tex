@@ -26,8 +26,8 @@
 \section{Algorithm}
 This project covers an implementation of an algorithm for texture growing as proposed by Alexei A. Efros et. al in the paper \textit{"Texture Synthesis by Non-parametric Sampling"}\cite{Efros}.
 
-To find a new pixel, the algorithm compares the neighborhood of the new pixel with neighborhood of each pixel of the source image. The pixel with the closest neighborhood becomes the source pixel and is copied to the new position. These steps are repeated until every pixel of the image is filled.
-In the beginning the source image is placed in the upper left corner. The size of the sythesized image can be specified by the parameter \texttt{SCALE}.
+To find a new pixel, the algorithm compares the neighborhood in the new pixel with neighborhood of each pixel of the source image. The pixel with the closest neighborhood becomes the source pixel and is copied to the new position. These steps are repeated until every pixel of the image is filled.
+In the beginning the source image is placed in the upper left corner. The size of the synthesized image can be specified by the parameter \texttt{SCALE}.
 The neighborhood of a pixel is compared by determining the pixel-wise L2-distance. 
 
 Obviously the neighbourhood of a pixel must have at least one non-zero pixel. Therefore the implementation only selects new pixels bordering to already synthesized pixels of the image. In addition to that it uses a mask $M\in [0,1]\times n \times n$ which exludes pixels with either zero value in the source or the target pixel from the neighbourhood.
@@ -35,15 +35,15 @@ Obviously the neighbourhood of a pixel must have at least one non-zero pixel. Th
 The final image is filled starting from the source image from top to bottom and then from left to right.
 
 \section{Performance and Accuracy}
-The accuracy of the algorithm highly depends on the \texttt{WINDOW} size used an the repetition of a particular pattern within a texture. 
-I observed that high repititions of small patterns require a smaller \texttt{WINDOW} size for better performance whereas large patterns are synthesized more accurately using a larger parameter. Figure 
+The accuracy of the algorithm highly depends on the \texttt{WINDOW} size used and the repetition of a particular pattern within a texture. 
+I observed that high repititions of small patterns require a smaller \texttt{WINDOW} size for better performance whereas large patterns are synthesized more accurately using a larger parameter. (Figure \ref{text-2}, \ref{text-3})
 
 
-My first implementations of this algorithm weighted the pixel-wise distances with a $2D$ gaussian kernel. But this method only reduced the effective window size in a radial manner and did not improve accuracy. Therefore it is not used in the final implementation, which also give a performance speedup.
+My first implementations of this algorithm weighted the pixel-wise distances with a $2D$ gaussian kernel. But this method only reduced the effective window size in a radial manner and did not improve accuracy. Therefore it is not used in the final implementation, which also gives a performance speedup.
 
-The function \texttt{find\_best\_match} consists of a loop itaration over almost every pixel in the source image. The function \texttt{compute distance} is called every iteration. To compute the distance, several element wise operations such as element-wise multiplication or computation of distance is required. Hence, this function scales to $\mathcal{O}(n^2)$, where $n$ is the \texttt{WINDOW} size. 
-Since the fucntion find best match is called for each pixel, namely at a scale of $\mathcal{O}((s*SCALE)^2-s^2))=\mathcal{O}(s^2)$, where $s$ is the source image size, the overall algorithm scales to $\mathcal{O}(s^4\times n^2 \times SCALE^2=\mathcal{O}(s^4*n^2)$. This scaling can be slightly improved by  making use of opencv's optimized math function, but still requires a significant amount of time for larger images. 
-The impact of the \texttt{WINDOW} size is not as significant for the overall performance, because $s>>n$ in the general case.
+The function \texttt{find\_best\_match} consists of a loop itaration over almost every pixel in the source image. The function \texttt{compute\_distance} is called every iteration. To compute the distance, several element wise operations such as element-wise multiplication or computation of distance are required. Hence, this function scales to $\mathcal{O}(n^2)$, where $n$ is the \texttt{WINDOW} size. 
+Since the function \texttt{find\_best\_match} is called for each pixel, namely at a scale of $\mathcal{O}((s*(SCALE - 1)^2))=\mathcal{O}(s^2)$, where $s$ is the source image size, the overall algorithm scales to $\mathcal{O}(s^4\times n^2 \times SCALE^2)=\mathcal{O}(s^4*n^2)$. This scaling can be slightly improved by making use of opencv's optimized math functions, but still requires a significant amount of time for larger images. 
+The impact of the \texttt{WINDOW} size is not significant for the overall performance, because $s>>n$ for the general case.
 % Texture 1
 \begin{figure}[H]
 	\begin{subfigure}{0.33\textwidth}
